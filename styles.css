@@ -172,10 +172,26 @@ button.danger:hover { border-color: var(--red); }
 }
 
 .bracket {
+  position: relative;
   display: flex;
   gap: 34px;
   min-width: 1180px;
 }
+
+svg.connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.connector-line {
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.round-column { position: relative; z-index: 1; }
 
 .round-column {
   flex: 1 0 210px;
@@ -259,7 +275,17 @@ button.danger:hover { border-color: var(--red); }
   color: var(--text);
 }
 
-.team-row.is-tbd { color: var(--muted); font-style: italic; }
+.team-row.is-tbd {
+  color: var(--muted);
+  font-style: italic;
+  opacity: .55;
+}
+.team-row.is-tbd .team-name {
+  letter-spacing: 1px;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-style: normal;
+}
 
 .team-row.is-pickable {
   cursor: pointer;
@@ -297,7 +323,8 @@ button.danger:hover { border-color: var(--red); }
   width: 24px;
   height: 18px;
   border-radius: 2px;
-  background: var(--border);
+  background: transparent;
+  border: 1px dashed var(--border);
 }
 
 .team-name {
