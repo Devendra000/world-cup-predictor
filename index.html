@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predict — FIFA World Cup 2026 Bracket</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header">
+    <div>
+      <span class="eyebrow">Road to July 19</span>
+      <h1>World Cup 2026 Bracket Predictor</h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Predict</a>
+      <a href="view.html">View a prediction</a>
+    </nav>
+  </header>
+
+  <p class="subtitle">
+    Confirmed results are locked in green. For every remaining match, click the team you think advances —
+    your pick instantly flows into the next round. Keep going until you've predicted a champion, then export
+    the JSON at the bottom and paste it into the <a href="view.html" style="color:var(--gold)">View</a> page any time.
+  </p>
+
+  <div id="championBanner"></div>
+
+  <div class="controls">
+    <button class="primary" id="exportBtn">Export JSON</button>
+    <button id="copyBtn">Copy JSON</button>
+    <button id="downloadBtn">Download JSON</button>
+    <button class="danger" id="resetBtn">Reset all picks</button>
+    <span class="copy-feedback" id="copyFeedback">Copied!</span>
+  </div>
+
+  <div class="bracket-scroll">
+    <div id="bracketContainer"></div>
+  </div>
+
+  <div class="export-panel">
+    <h2>Your prediction JSON</h2>
+    <textarea class="json-box" id="jsonBox" readonly></textarea>
+    <p class="hint">This updates live as you pick winners. Copy or download it, then paste it into the View page to see it rendered again — even in a new session.</p>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script src="bracket.js"></script>
+<script>
+  const STORAGE_KEY = "wc2026_picks";
+  const container = document.getElementById("bracketContainer");
+  const jsonBox = document.getElementById("jsonBox");
+  const championBanner = document.getElementById("championBanner");
+  const copyFeedback = document.getElementById("copyFeedback");
+
+  function loadPicks() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function savePicks(picks) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+  }
+
+  let picks = loadPicks();
+
+  function buildExportPayload(computed) {
+    return {
+      tournament: window.TOURNAMENT.name,
+      generatedAt: new Date().toISOString(),
+      champion: champion(computed),
+      matches: computed.map(m => ({
+        id: m.id,
+        round: m.round,
+        region: m.region,
+        date: m.date,
+        teamA: m.teamA,
+        teamB: m.teamB,
+        winner: m.winner,
+        status: m.status,
+        result: m.result || null
+      }))
+    };
+  }
+
+  function renderChampionBanner(champ) {
+    if (champ) {
+      championBanner.innerHTML = `<div class="champion-banner">
+        <span class="eyebrow2">Your predicted champion</span>
+        <span class="champ-name">${flagImg(champ)} ${champ}</span>
+      </div>`;
+    } else {
+      championBanner.innerHTML = `<div class="champion-banner empty">
+        <span class="eyebrow2">Predicted champion</span>
+        <span class="champ-name" style="color:var(--muted); font-weight:400;">Keep picking winners to find out</span>
+      </div>`;
+    }
+  }
+
+  function redraw() {
+    const computed = computeBracket(window.TOURNAMENT.matches, picks);
+    renderBracket(container, computed, { interactive: true, onPick: handlePick });
+    renderChampionBanner(champion(computed));
+    jsonBox.value = JSON.stringify(buildExportPayload(computed), null, 2);
+    return computed;
+  }
+
+  function handlePick(matchId, teamName) {
+    picks[matchId] = teamName;
+
+    // if this match's winner changes, any downstream picks that depended on
+    // the old winner are now stale — recompute will naturally clear teamA/teamB
+    // for those, but stored picks for now-impossible matchups should be dropped.
+    const computed = computeBracket(window.TOURNAMENT.matches, picks);
+    const validIds = new Set(computed.filter(m => m.teamA && m.teamB).map(m => m.id));
+    Object.keys(picks).forEach(id => {
+      const m = computed.find(x => x.id === id);
+      if (!m || !validIds.has(id) || (picks[id] !== m.teamA && picks[id] !== m.teamB)) {
+        delete picks[id];
+      }
+    });
+
+    savePicks(picks);
+    redraw();
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("Clear every pick you've made? Locked results stay as-is.")) {
+      picks = {};
+      savePicks(picks);
+      redraw();
+    }
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    redraw();
+    jsonBox.focus();
+    jsonBox.select();
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    redraw();
+    try {
+      await navigator.clipboard.writeText(jsonBox.value);
+    } catch {
+      jsonBox.focus();
+      jsonBox.select();
+      document.execCommand("copy");
+    }
+    copyFeedback.classList.add("show");
+    setTimeout(() => copyFeedback.classList.remove("show"), 1500);
+  });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    const computed = redraw();
+    const blob = new Blob([JSON.stringify(buildExportPayload(computed), null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "wc2026-prediction.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  redraw();
+</script>
+</body>
+</html>

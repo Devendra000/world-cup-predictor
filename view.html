@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Prediction — FIFA World Cup 2026 Bracket</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header">
+    <div>
+      <span class="eyebrow">Road to July 19</span>
+      <h1>View a Bracket Prediction</h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">Predict</a>
+      <a href="view.html" class="active">View a prediction</a>
+    </nav>
+  </header>
+
+  <p class="subtitle">Paste the JSON you exported from the Predict page below to see it rendered as a bracket.</p>
+
+  <div class="paste-panel">
+    <h2>Paste prediction JSON</h2>
+    <textarea class="json-box" id="pasteBox" placeholder='{"tournament": "FIFA World Cup 2026", "matches": [...] }'></textarea>
+    <div class="controls" style="margin-top:12px; margin-bottom:0;">
+      <button class="primary" id="renderBtn">Show bracket</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+    <p class="error-msg" id="errorMsg"></p>
+  </div>
+
+  <div id="championBanner"></div>
+
+  <div class="bracket-scroll">
+    <div id="bracketContainer"></div>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script src="bracket.js"></script>
+<script>
+  const pasteBox = document.getElementById("pasteBox");
+  const errorMsg = document.getElementById("errorMsg");
+  const container = document.getElementById("bracketContainer");
+  const championBanner = document.getElementById("championBanner");
+  const STORAGE_KEY = "wc2026_last_pasted";
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add("show");
+  }
+  function clearError() {
+    errorMsg.classList.remove("show");
+  }
+
+  function renderChampionBanner(champ) {
+    if (champ) {
+      championBanner.innerHTML = `<div class="champion-banner">
+        <span class="eyebrow2">Predicted champion</span>
+        <span class="champ-name">${flagImg(champ)} ${champ}</span>
+      </div>`;
+    } else {
+      championBanner.innerHTML = "";
+    }
+  }
+
+  function renderFromPayload(payload) {
+    if (!payload || !Array.isArray(payload.matches)) {
+      throw new Error("JSON is missing a valid \"matches\" array.");
+    }
+    // Fill in default fields so the shared renderer has what it needs,
+    // and make sure round order is respected regardless of paste order.
+    const byId = {};
+    payload.matches.forEach(m => (byId[m.id] = m));
+    const ordered = window.TOURNAMENT.matches
+      .map(base => byId[base.id] ? { ...base, ...byId[base.id] } : base);
+
+    renderBracket(container, ordered, { interactive: false });
+    renderChampionBanner(payload.champion || champion(ordered));
+  }
+
+  document.getElementById("renderBtn").addEventListener("click", () => {
+    clearError();
+    const raw = pasteBox.value.trim();
+    if (!raw) {
+      showError("Paste some JSON first.");
+      return;
+    }
+    try {
+      const payload = JSON.parse(raw);
+      renderFromPayload(payload);
+      localStorage.setItem(STORAGE_KEY, raw);
+    } catch (e) {
+      showError("Couldn't read that JSON — " + e.message);
+      container.innerHTML = "";
+      championBanner.innerHTML = "";
+    }
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    pasteBox.value = "";
+    container.innerHTML = "";
+    championBanner.innerHTML = "";
+    clearError();
+    localStorage.removeItem(STORAGE_KEY);
+  });
+
+  // Restore last pasted prediction on load, if any
+  const last = localStorage.getItem(STORAGE_KEY);
+  if (last) {
+    pasteBox.value = last;
+    try {
+      renderFromPayload(JSON.parse(last));
+    } catch { /* ignore */ }
+  }
+</script>
+</body>
+</html>
