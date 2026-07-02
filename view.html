@@ -34,6 +34,28 @@
 
   <div id="championBanner"></div>
 
+  <div class="score-summary" id="scoreSummary" style="display:none">
+    <div class="score-badge">
+      <span class="big-num correct" id="cntCorrect">0</span>
+      <span class="badge-label">Correct</span>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-badge">
+      <span class="big-num wrong" id="cntWrong">0</span>
+      <span class="badge-label">Wrong</span>
+    </div>
+    <div class="score-divider"></div>
+    <div class="accuracy-bar-wrap">
+      <div class="accuracy-label">
+        <span>Accuracy (graded picks)</span>
+        <span id="accuracyPct">—</span>
+      </div>
+      <div class="accuracy-bar">
+        <div class="accuracy-fill" id="accuracyFill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="bracket-scroll">
     <div id="bracketContainer"></div>
   </div>
@@ -55,6 +77,30 @@
   }
   function clearError() {
     errorMsg.classList.remove("show");
+  }
+
+  const scoreSummary = document.getElementById("scoreSummary");
+  const cntCorrect = document.getElementById("cntCorrect");
+  const cntWrong = document.getElementById("cntWrong");
+  const accuracyPct = document.getElementById("accuracyPct");
+  const accuracyFill = document.getElementById("accuracyFill");
+
+  function renderScoreSummary(matches) {
+    const correct = matches.filter(m => m.checkState === "correct").length;
+    const wrong = matches.filter(m => m.checkState === "wrong").length;
+    const graded = correct + wrong;
+
+    if (graded === 0) {
+      scoreSummary.style.display = "none";
+      return;
+    }
+
+    const pct = Math.round((correct / graded) * 100);
+    cntCorrect.textContent = correct;
+    cntWrong.textContent = wrong;
+    accuracyPct.textContent = `${pct}%`;
+    accuracyFill.style.width = `${pct}%`;
+    scoreSummary.style.display = "flex";
   }
 
   function renderChampionBanner(champ) {
@@ -82,6 +128,7 @@
 
     renderBracket(container, ordered, { interactive: false });
     renderChampionBanner(payload.champion || champion(ordered));
+    renderScoreSummary(ordered);
   }
 
   document.getElementById("renderBtn").addEventListener("click", () => {
@@ -106,6 +153,7 @@
     pasteBox.value = "";
     container.innerHTML = "";
     championBanner.innerHTML = "";
+    scoreSummary.style.display = "none";
     clearError();
     localStorage.removeItem(STORAGE_KEY);
   });
