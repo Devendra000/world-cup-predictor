@@ -59,6 +59,35 @@ function computeBracket(baseMatches, picks) {
   return matches;
 }
 
+/**
+ * Merge one "actual" match (from data.js, the ground truth) with the
+ * corresponding match from a pasted prediction JSON, for read-only viewing.
+ *
+ * Rules:
+ * - If the actual match is NOT completed yet, the prediction's fields
+ *   (teamA/teamB/winner/status/result) win — we're just showing the guess.
+ * - If the actual match IS completed, the actual data always wins for
+ *   display (real teams/score/winner). But if the prediction had guessed
+ *   a winner for it *before* it was completed (i.e. predicted.status is
+ *   not "completed"), we grade that guess: checkState becomes "correct"
+ *   or "wrong", and predictedWinner is stashed for the team-row badge.
+ * - If there's no prediction for this match at all, actual is returned as-is.
+ */
+function mergeForCheck(base, predicted) {
+  if (!predicted) return { ...base, checkState: null, predictedWinner: null };
+
+  if (base.status === "completed") {
+    const merged = { ...base, checkState: null, predictedWinner: null };
+    if (predicted.status !== "completed" && predicted.winner) {
+      merged.predictedWinner = predicted.winner;
+      merged.checkState = predicted.winner === base.winner ? "correct" : "wrong";
+    }
+    return merged;
+  }
+
+  return { ...base, ...predicted, checkState: null, predictedWinner: null };
+}
+
 /* Group a computed match list by round, preserving array order within each round */
 function groupByRound(matches) {
   const byRound = {};
@@ -79,16 +108,34 @@ function teamRowHTML(match, side, interactive, onPickAttr) {
   if (!team) classes.push("is-tbd");
   if (clickable) classes.push("is-pickable");
 
+  let pickBadge = "";
+  if (match.checkState && team && team === match.predictedWinner) {
+    if (match.checkState === "correct") {
+      classes.push("picked-correct");
+      pickBadge = `<span class="pick-badge pick-badge-correct">✓ your pick</span>`;
+    } else {
+      classes.push("picked-wrong");
+      pickBadge = `<span class="pick-badge pick-badge-wrong">✗ your pick</span>`;
+    }
+  }
+
   const label = team || "TBD";
   const attrs = clickable ? `role="button" tabindex="0" data-match="${match.id}" data-team="${team}" ${onPickAttr}` : "";
 
   return `<div class="${classes.join(" ")}" ${attrs}>
     ${flagImg(team)}
     <span class="team-name">${label}</span>
+    ${pickBadge}
   </div>`;
 }
 
 function statusTag(match) {
+  if (match.checkState === "correct") {
+    return `<span class="tag tag-correct">✅ CORRECT${match.result ? " · " + match.result : ""}</span>`;
+  }
+  if (match.checkState === "wrong") {
+    return `<span class="tag tag-wrong">❌ WRONG${match.result ? " · " + match.result : ""}</span>`;
+  }
   if (match.status === "completed") {
     return `<span class="tag tag-result">RESULT${match.result ? " · " + match.result : ""}</span>`;
   }
@@ -103,7 +150,9 @@ function statusTag(match) {
 
 function matchCardHTML(match, interactive) {
   const meta = [match.region, match.date].filter(Boolean).join(" · ");
-  return `<div class="match-card" data-match-id="${match.id}">
+  const checkClass = match.checkState === "correct" ? " check-correct"
+    : match.checkState === "wrong" ? " check-wrong" : "";
+  return `<div class="match-card${checkClass}" data-match-id="${match.id}">
     <div class="match-meta">
       <span class="match-region">${meta}</span>
       ${statusTag(match)}
