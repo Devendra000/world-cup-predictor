@@ -20,7 +20,7 @@
     </nav>
   </header>
 
-  <p class="subtitle">Paste the JSON you exported from the Predict page below to see it rendered as a bracket. Any pick you made for a match that has since finished will be graded automatically — green card if you called it, red if you didn't.</p>
+  <p class="subtitle">Paste the JSON you exported from the Predict page below to see it rendered as a bracket. Any pick you made for a match that has since finished — or that depends on a team that's already been eliminated — is graded automatically: green card if you called it, red if you didn't.</p>
 
   <div class="paste-panel">
     <h2>Paste prediction JSON</h2>
@@ -118,13 +118,12 @@
     if (!payload || !Array.isArray(payload.matches)) {
       throw new Error("JSON is missing a valid \"matches\" array.");
     }
-    // Index the pasted prediction by match id, then walk data.js (the
-    // ground truth) in bracket order, grading each prediction against it
-    // via mergeForCheck (from bracket.js).
+    // Index the pasted prediction by match id, then grade the whole
+    // prediction against the ground truth in data.js in one pass —
+    // gradePredictions handles cascading invalidation (see bracket.js).
     const byId = {};
     payload.matches.forEach(m => (byId[m.id] = m));
-    const ordered = window.TOURNAMENT.matches
-      .map(base => mergeForCheck(base, byId[base.id]));
+    const ordered = gradePredictions(window.TOURNAMENT.matches, byId);
 
     renderBracket(container, ordered, { interactive: false });
     renderChampionBanner(payload.champion || champion(ordered));

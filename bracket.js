@@ -59,35 +59,6 @@ function computeBracket(baseMatches, picks) {
   return matches;
 }
 
-/**
- * Merge one "actual" match (from data.js, the ground truth) with the
- * corresponding match from a pasted prediction JSON, for read-only viewing.
- *
- * Rules:
- * - If the actual match is NOT completed yet, the prediction's fields
- *   (teamA/teamB/winner/status/result) win — we're just showing the guess.
- * - If the actual match IS completed, the actual data always wins for
- *   display (real teams/score/winner). But if the prediction had guessed
- *   a winner for it *before* it was completed (i.e. predicted.status is
- *   not "completed"), we grade that guess: checkState becomes "correct"
- *   or "wrong", and predictedWinner is stashed for the team-row badge.
- * - If there's no prediction for this match at all, actual is returned as-is.
- */
-function mergeForCheck(base, predicted) {
-  if (!predicted) return { ...base, checkState: null, predictedWinner: null };
-
-  if (base.status === "completed") {
-    const merged = { ...base, checkState: null, predictedWinner: null };
-    if (predicted.status !== "completed" && predicted.winner) {
-      merged.predictedWinner = predicted.winner;
-      merged.checkState = predicted.winner === base.winner ? "correct" : "wrong";
-    }
-    return merged;
-  }
-
-  return { ...base, ...predicted, checkState: null, predictedWinner: null };
-}
-
 /* Group a computed match list by round, preserving array order within each round */
 function groupByRound(matches) {
   const byRound = {};
@@ -108,33 +79,21 @@ function teamRowHTML(match, side, interactive, onPickAttr) {
   if (!team) classes.push("is-tbd");
   if (clickable) classes.push("is-pickable");
 
-  let pickBadge = "";
-  if (match.checkState && team && team === match.predictedWinner) {
-    if (match.checkState === "correct") {
-      classes.push("picked-correct");
-      pickBadge = `<span class="pick-badge pick-badge-correct">✓ your pick</span>`;
-    } else {
-      classes.push("picked-wrong");
-      pickBadge = `<span class="pick-badge pick-badge-wrong">✗ your pick</span>`;
-    }
-  }
-
   const label = team || "TBD";
   const attrs = clickable ? `role="button" tabindex="0" data-match="${match.id}" data-team="${team}" ${onPickAttr}` : "";
 
   return `<div class="${classes.join(" ")}" ${attrs}>
     ${flagImg(team)}
     <span class="team-name">${label}</span>
-    ${pickBadge}
   </div>`;
 }
 
 function statusTag(match) {
   if (match.checkState === "correct") {
-    return `<span class="tag tag-correct">✅ CORRECT${match.result ? " · " + match.result : ""}</span>`;
+    return `<span class="tag tag-correct">✓ CORRECT</span>`;
   }
   if (match.checkState === "wrong") {
-    return `<span class="tag tag-wrong">❌ WRONG${match.result ? " · " + match.result : ""}</span>`;
+    return `<span class="tag tag-wrong">✗ WRONG</span>`;
   }
   if (match.status === "completed") {
     return `<span class="tag tag-result">RESULT${match.result ? " · " + match.result : ""}</span>`;
@@ -150,9 +109,9 @@ function statusTag(match) {
 
 function matchCardHTML(match, interactive) {
   const meta = [match.region, match.date].filter(Boolean).join(" · ");
-  const checkClass = match.checkState === "correct" ? " check-correct"
-    : match.checkState === "wrong" ? " check-wrong" : "";
-  return `<div class="match-card${checkClass}" data-match-id="${match.id}">
+  const stateClass = match.checkState === "correct" ? " is-graded-correct"
+    : match.checkState === "wrong" ? " is-graded-wrong" : "";
+  return `<div class="match-card${stateClass}" data-match-id="${match.id}">
     <div class="match-meta">
       <span class="match-region">${meta}</span>
       ${statusTag(match)}
@@ -270,6 +229,78 @@ function drawConnectors(container, matches) {
   });
 
   bracketEl.appendChild(svg);
+}
+
+/**
+ * Builds { team: roundIndexEliminated } from the real ground-truth matches —
+ * i.e. only matches actually marked "completed" in data.js.
+ */
+function computeEliminationRounds(actualMatches) {
+  const map = {};
+  actualMatches.forEach(m => {
+    if (m.status === "completed" && m.winner) {
+      const loser = m.teamA === m.winner ? m.teamB : (m.teamB === m.winner ? m.teamA : null);
+      if (loser) map[loser] = ROUND_ORDER.indexOf(m.round);
+    }
+  });
+  return map;
+}
+
+/**
+ * Grades a full pasted prediction against the real ground truth (data.js).
+ *
+ * baseMatches: window.TOURNAMENT.matches (ground truth tree/definitions)
+ * predictedById: { matchId: predictedMatchObject } from the pasted JSON
+ *
+ * For each match, checkState becomes:
+ *  - "correct" / "wrong"  — once the real match itself has been played, OR
+ *                            immediately "wrong" if either predicted team was
+ *                            already eliminated in an EARLIER real round
+ *                            (so a pick that depends on it can never happen)
+ *  - null                 — no pick made yet, or genuinely still pending
+ *
+ * The elimination check only applies to rounds strictly AFTER the round a
+ * team actually lost in — the match where they lost is graded normally by
+ * comparing the predicted winner to the real winner, not auto-failed.
+ */
+function gradePredictions(baseMatches, predictedById) {
+  const actual = computeBracket(baseMatches, {});
+  const actualById = indexById(actual);
+  const eliminationRound = computeEliminationRounds(actual);
+
+  return baseMatches.map(base => {
+    const predicted = predictedById[base.id];
+    const merged = { ...base };
+    merged.teamA = predicted ? (predicted.teamA ?? null) : null;
+    merged.teamB = predicted ? (predicted.teamB ?? null) : null;
+    merged.winner = predicted ? (predicted.winner ?? null) : null;
+
+    const actualMatch = actualById[base.id];
+    const roundIdx = ROUND_ORDER.indexOf(base.round);
+
+    const involvesAlreadyEliminated = [merged.teamA, merged.teamB].some(team => {
+      if (!team) return false;
+      const elimRound = eliminationRound[team];
+      return elimRound !== undefined && elimRound < roundIdx;
+    });
+
+    if (!merged.winner) {
+      merged.checkState = null;
+    } else if (involvesAlreadyEliminated) {
+      merged.checkState = "wrong";
+    } else if (actualMatch && actualMatch.status === "completed") {
+      merged.checkState = merged.winner === actualMatch.winner ? "correct" : "wrong";
+    } else {
+      merged.checkState = null;
+    }
+
+    // show the real status/result for context (so a real "RESULT" tag still
+    // appears even though we're rendering the user's predicted matchup)
+    merged.status = actualMatch ? actualMatch.status : base.status;
+    merged.result = actualMatch ? actualMatch.result : null;
+
+    return merged;
+  });
 }
 
 function champion(matches) {

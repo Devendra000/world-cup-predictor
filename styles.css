@@ -226,18 +226,6 @@ svg.connectors {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  transition: border-color .2s, box-shadow .2s;
-}
-
-/* Prediction grading — set once a match that was picked while still
-   pending has since completed in data.js */
-.match-card.check-correct {
-  border-color: var(--green);
-  box-shadow: 0 0 0 1px rgba(52,168,116,.25);
-}
-.match-card.check-wrong {
-  border-color: var(--red);
-  box-shadow: 0 0 0 1px rgba(198,93,93,.25);
 }
 
 .match-meta {
@@ -272,8 +260,81 @@ svg.connectors {
 .tag-pick    { background: rgba(217,164,65,.18); color: var(--gold); }
 .tag-open    { background: rgba(237,239,243,.08); color: var(--text); }
 .tag-waiting { background: rgba(137,147,168,.12); color: var(--muted); }
-.tag-correct { background: rgba(52,168,116,.18); color: var(--green); }
-.tag-wrong   { background: rgba(198,93,93,.18); color: var(--red); }
+.tag-correct { background: rgba(52,168,116,.22); color: var(--green); }
+.tag-wrong   { background: rgba(198,93,93,.22); color: var(--red); }
+
+.match-card.is-graded-correct { border-color: var(--green); }
+.match-card.is-graded-wrong   { border-color: var(--red); }
+.match-card.is-graded-correct .match-meta { background: rgba(52,168,116,.08); }
+.match-card.is-graded-wrong .match-meta   { background: rgba(198,93,93,.08); }
+
+/* ---------- Score summary panel ---------- */
+.score-summary {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+}
+
+.big-num {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+.big-num.correct { color: var(--green); }
+.big-num.wrong { color: var(--red); }
+
+.badge-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-top: 4px;
+}
+
+.score-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+}
+
+.accuracy-bar-wrap { flex: 1; min-width: 180px; }
+
+.accuracy-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.accuracy-label span:last-child { color: var(--text); font-weight: 600; }
+
+.accuracy-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel-alt);
+  overflow: hidden;
+}
+
+.accuracy-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #4fc98d);
+  transition: width .3s ease;
+}
 
 .match-teams { padding: 4px; }
 
@@ -323,32 +384,6 @@ svg.connectors {
   opacity: .45;
   text-decoration: line-through;
 }
-
-/* A wrongly-predicted team stays fully visible (not faded/struck) so the
-   miss is legible at a glance, and tints red instead. */
-.team-row.is-loser.picked-wrong {
-  opacity: 1;
-  text-decoration: none;
-  color: var(--red);
-  background: rgba(198,93,93,.10);
-}
-
-.team-row.picked-correct {
-  background: rgba(52,168,116,.14);
-}
-
-.pick-badge {
-  margin-left: auto;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .4px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.pick-badge-correct { background: rgba(52,168,116,.2); color: var(--green); }
-.pick-badge-wrong   { background: rgba(198,93,93,.2); color: var(--red); }
 
 .flag {
   width: 24px;
@@ -415,72 +450,6 @@ textarea.json-box {
   transition: opacity .2s;
 }
 .copy-feedback.show { opacity: 1; }
-
-/* ---------- Score summary bar ---------- */
-.score-summary {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-}
-.score-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 64px;
-}
-.score-badge .big-num {
-  font-family: 'Oswald', sans-serif;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1;
-}
-.score-badge .big-num.correct { color: var(--green); }
-.score-badge .big-num.wrong   { color: var(--red); }
-.score-badge .badge-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 4px;
-}
-.score-divider {
-  width: 1px;
-  height: 40px;
-  background: var(--border);
-  flex-shrink: 0;
-}
-.accuracy-bar-wrap { flex: 1; min-width: 160px; }
-.accuracy-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-}
-.accuracy-bar {
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.accuracy-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--green), #4ecca3);
-  border-radius: 4px;
-  transition: width 0.6s ease;
-}
-
-@media (max-width: 640px) {
-  .score-summary { flex-direction: column; align-items: flex-start; }
-  .score-divider { display: none; }
-}
 
 /* ---------- View page paste panel ---------- */
 .paste-panel {
