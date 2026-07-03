@@ -382,6 +382,8 @@ svg.connectors {
 
 .team-row.is-loser {
   opacity: .45;
+}
+.team-row.is-loser .team-name {
   text-decoration: line-through;
 }
 
@@ -403,9 +405,28 @@ svg.connectors {
 }
 
 .team-name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.team-score {
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.team-row.is-winner .team-score { color: var(--green); }
+
+.pen-score {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 /* ---------- Export panel ---------- */

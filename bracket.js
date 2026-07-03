@@ -67,6 +67,14 @@ function groupByRound(matches) {
   return byRound;
 }
 
+/* Parses a result string like "2-0" or "1-1 (3-4 pen.)" into per-team scores */
+function parseResult(resultStr) {
+  if (!resultStr) return null;
+  const m = resultStr.match(/(\d+)\s*-\s*(\d+)(?:\s*\((\d+)\s*-\s*(\d+)\s*pen\.?\))?/i);
+  if (!m) return null;
+  return { aScore: m[1], bScore: m[2], aPen: m[3], bPen: m[4] };
+}
+
 function teamRowHTML(match, side, interactive, onPickAttr) {
   const team = side === "A" ? match.teamA : match.teamB;
   const isWinner = match.winner && team === match.winner;
@@ -82,9 +90,18 @@ function teamRowHTML(match, side, interactive, onPickAttr) {
   const label = team || "TBD";
   const attrs = clickable ? `role="button" tabindex="0" data-match="${match.id}" data-team="${team}" ${onPickAttr}` : "";
 
+  let scoreHTML = "";
+  const parsed = team ? parseResult(match.result) : null;
+  if (parsed) {
+    const score = side === "A" ? parsed.aScore : parsed.bScore;
+    const pen = side === "A" ? parsed.aPen : parsed.bPen;
+    scoreHTML = `<span class="team-score">${score}${pen !== undefined ? ` <span class="pen-score">(${pen})</span>` : ""}</span>`;
+  }
+
   return `<div class="${classes.join(" ")}" ${attrs}>
     ${flagImg(team)}
     <span class="team-name">${label}</span>
+    ${scoreHTML}
   </div>`;
 }
 
