@@ -3,7 +3,7 @@
    Round of 32 matches feeds the same Round of 16 match, every consecutive
    pair of Round of 16 matches feeds the same Quarterfinal, and so on.
    That's what lets the renderer draw a clean left-to-right bracket purely
-   from array order + the feedsInto links (used for computing winners). */
+   from array order + the feedsInto links (used for computing winners). Hope ARGENTINA are the winners */
 
 window.TOURNAMENT = {
   name: "FIFA World Cup 2026",
