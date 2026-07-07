@@ -3,7 +3,7 @@
    Round of 32 matches feeds the same Round of 16 match, every consecutive
    pair of Round of 16 matches feeds the same Quarterfinal, and so on.
    That's what lets the renderer draw a clean left-to-right bracket purely
-   from array order + the feedsInto links (used for computing winners). Hope ARGENTINA are the winners */
+   from array order + the feedsInto links (used for computing winners). */
 
 window.TOURNAMENT = {
   name: "FIFA World Cup 2026",
@@ -32,18 +32,18 @@ window.TOURNAMENT = {
     { id: "M79", round: "RO32", region: "Miami",        date: "Tue, Jun 30", kickoff: "9:00 PM ET", teamA: "Mexico",      teamB: "Ecuador",               status: "completed", winner: "Mexico",  result: "2-0", feedsInto: { matchId: "M92", slot: "A" } },
     { id: "M80", round: "RO32", region: "Miami",        date: "Wed, Jul 1",  kickoff: "12:00 PM ET",teamA: "England",     teamB: "DR Congo",              status: "completed", winner: "England", result: "2-1", feedsInto: { matchId: "M92", slot: "B" } },
 
-    { id: "M86", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "6:00 PM ET", teamA: "Argentina",   teamB: "Cape Verde",            status: "pending",   winner: null, result: null, feedsInto: { matchId: "M95", slot: "A" } },
-    { id: "M88", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "2:00 PM ET", teamA: "Australia",   teamB: "Egypt",                 status: "pending",   winner: null, result: null, feedsInto: { matchId: "M95", slot: "B" } },
+    { id: "M86", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "6:00 PM ET", teamA: "Argentina",   teamB: "Cape Verde",            status: "completed", winner: "Argentina", result: "3-2", feedsInto: { matchId: "M95", slot: "A" } },
+    { id: "M88", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "2:00 PM ET", teamA: "Australia",   teamB: "Egypt",                 status: "completed", winner: "Egypt", result: "1-1 (2-4 pen.)", feedsInto: { matchId: "M95", slot: "B" } },
     { id: "M85", round: "RO32", region: "Kansas City",  date: "Thu, Jul 2",  kickoff: "11:00 PM ET",teamA: "Switzerland", teamB: "Algeria",               status: "completed", winner: "Switzerland", result: "2-0", feedsInto: { matchId: "M96", slot: "A" } },
-    { id: "M87", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "9:30 PM ET", teamA: "Colombia",    teamB: "Ghana",                 status: "pending",   winner: null, result: null, feedsInto: { matchId: "M96", slot: "B" } },
+    { id: "M87", round: "RO32", region: "Kansas City",  date: "Fri, Jul 3",  kickoff: "9:30 PM ET", teamA: "Colombia",    teamB: "Ghana",                 status: "completed", winner: "Colombia", result: "1-0", feedsInto: { matchId: "M96", slot: "B" } },
 
     // ---------- ROUND OF 16 (8 matches) — teams fill in as picks are made ----------
-    { id: "M89", round: "RO16", region: "Boston",      date: "Jul 5",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M97", slot: "A" } },
-    { id: "M90", round: "RO16", region: "Boston",      date: "Jul 4",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M97", slot: "B" } },
-    { id: "M93", round: "RO16", region: "Los Angeles", date: "Jul 7",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M98", slot: "A" } },
-    { id: "M94", round: "RO16", region: "Los Angeles", date: "Jul 7",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M98", slot: "B" } },
-    { id: "M91", round: "RO16", region: "Miami",       date: "Jul 6",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M99", slot: "A" } },
-    { id: "M92", round: "RO16", region: "Miami",       date: "Jul 6",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M99", slot: "B" } },
+    { id: "M89", round: "RO16", region: "Boston",      date: "Jul 5",  teamA: null, teamB: null, status: "completed", winner: "France", result: "0-1", feedsInto: { matchId: "M97", slot: "A" } },
+    { id: "M90", round: "RO16", region: "Boston",      date: "Jul 4",  teamA: null, teamB: null, status: "completed", winner: "Morocco", result: "0-3", feedsInto: { matchId: "M97", slot: "B" } },
+    { id: "M93", round: "RO16", region: "Los Angeles", date: "Jul 7",  teamA: null, teamB: null, status: "completed", winner: "Spain", result: "0-1", feedsInto: { matchId: "M98", slot: "A" } },
+    { id: "M94", round: "RO16", region: "Los Angeles", date: "Jul 7",  teamA: null, teamB: null, status: "completed", winner: "Belgium", result: "1-4", feedsInto: { matchId: "M98", slot: "B" } },
+    { id: "M91", round: "RO16", region: "Miami",       date: "Jul 6",  teamA: null, teamB: null, status: "completed", winner: "Norway", result: "1-2", feedsInto: { matchId: "M99", slot: "A" } },
+    { id: "M92", round: "RO16", region: "Miami",       date: "Jul 6",  teamA: null, teamB: null, status: "completed", winner: "England", result: "2-3", feedsInto: { matchId: "M99", slot: "B" } },
     { id: "M95", round: "RO16", region: "Kansas City", date: "Jul 7",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M100", slot: "A" } },
     { id: "M96", round: "RO16", region: "Kansas City", date: "Jul 8",  teamA: null, teamB: null, status: "pending", winner: null, result: null, feedsInto: { matchId: "M100", slot: "B" } },
 
